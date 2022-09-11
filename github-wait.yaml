@@ -1,0 +1,60 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: github-wait
+  namespace: argo
+spec:
+  entrypoint: pr
+  templates:
+    - name: pr
+      inputs:
+        parameters:
+        - name: pr-prefix-name
+        - name: github-repo
+        - name: path-to-file
+        - name: github-branch
+          value: main
+        - name: image-name
+        - name: updated-revision
+        - name: github-credentials-secret
+          value: github-pat
+      script:
+        image: docker.io/greenopsinc/pygithub
+        env:
+          - name: TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: {{inputs.parameters.github-credentials-secret}}
+                key: token
+                optional: false
+        command: [python]
+        source: |
+          from github import Github
+          import os
+          import time
+          import string
+          import random
+          source = "{{inputs.parameters.github-branch}}"
+          letters = string.ascii_lowercase
+          new_branch = "{{inputs.parameters.github-credentials-secret}}" + ''.join(random.choice(letters) for i in range(10))
+          token = os.getenv('TOKEN')
+          g = Github(token)
+          repo = g.get_repo("{{inputs.parameters.github-repo}}")
+          sb = repo.get_branch(source)
+          #Creating new branch
+          repo.create_git_ref(ref='refs/heads/' + new_branch, sha=sb.commit.sha)
+          #Updating new branch
+          contents = repo.get_contents("{{inputs.parameters.path-to-file}}", ref=new_branch)
+          raw_contents = contents.decoded_content.decode()
+          if "docker.io/1mihirpandya/testapp:latest" in raw_contents:
+              raw_contents = raw_contents.replace("image: docker.io/1mihirpandya/testapp:latest", "image: docker.io/1mihirpandya/testapp:v2")
+              raw_contents = raw_contents.replace("replicas: 3", "replicas: 5")
+          else:
+              raw_contents = raw_contents.replace("image: docker.io/1mihirpandya/testapp:v2", "image: docker.io/1mihirpandya/testapp:latest")
+              raw_contents = raw_contents.replace("replicas: 5", "replicas: 3")
+          repo.update_file(contents.path, "updating release", raw_contents, contents.sha, branch=new_branch)
+          #Creating pull request
+          pr = repo.create_pull(title="Updating release", body="updates", head=new_branch, base=source)
+          #Waiting for merge
+          while not pr.is_merged():
+              time.sleep(10)
