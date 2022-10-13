@@ -1,13 +1,13 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: argocd-create-sync-and-wait-
+  name: argocd-create
   namespace: argo
 spec:
   workflowMetadata:
-  entrypoint: argocd-create-sync-and-wait
+  entrypoint: argocd-create
   templates:
-    - name: argocd-create-sync-and-wait
+    - name: argocd-create
       outputs:
         parameters:
           - name: greenops-argocd-info
@@ -23,6 +23,8 @@ spec:
           - name: application-repo-path
           - name: application-destination-server
           - name: application-destination-namespace
+          - name: git-cred-username
+          - name: git-cred-token
           - name: flags
             value: --
           - name: argocd-server-address
@@ -64,14 +66,6 @@ spec:
           
           argocd account get-user-info {{inputs.parameters.flags}}
           
+          argocd repo add {{inputs.parameters.application-repo-url}} --username {{inputs.parameters.git-cred-username}} --password {{inputs.parameters.git-cred-token}}
+          
           argocd app create {{inputs.parameters.application-name}} --repo {{inputs.parameters.application-repo-url}} --path {{inputs.parameters.application-repo-path}} --revision {{inputs.parameters.revision}} --dest-server {{inputs.parameters.application-destination-server}} --dest-namespace {{inputs.parameters.application-destination-namespace}}
-          
-          argocd app sync {{inputs.parameters.application-name}} --revision {{inputs.parameters.revision}} {{inputs.parameters.flags}}
-          
-          argocd app wait {{inputs.parameters.application-name}} --health {{inputs.parameters.flags}}
-          
-          ARGOCD_REV=$(argocd app history {{inputs.parameters.application-name}} | grep -o "(.*)" | tail -1 | sed 's/[()]//g')
-          
-          ARGOCD_APP={{inputs.parameters.application-name}}
-          
-          echo "{\"$ARGOCD_APP\": \"$ARGOCD_REV\"}" > greenops-output.txt
