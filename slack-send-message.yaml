@@ -11,9 +11,19 @@ spec:
       inputs:
         parameters:
           - name: webhook-url
-          - name: webhook-token
+          - name: webhook-token-secret
           - name: message
-      http:
-        method: "POST"
-        url: "{{inputs.parameters.webhook-url}}/{{inputs.parameters.webhook-token}}"
-        body: '{"text":"{{inputs.parameters.message}}"}'
+      script:
+        image: ellerbrock/alpine-bash-curl-ssl:latest
+        command: [ bash ]
+        env:
+          - name: WEBHOOK_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: "{{inputs.parameters.webhook-token-secret}}"
+                key: token
+        source: |
+          #!/bin/bash
+          
+          echo "token = $WEBHOOK_TOKEN"
+          curl -X POST --data '{"text":"{{inputs.parameters.message}}"}' {{inputs.parameters.webhook-url}}/$WEBHOOK_TOKEN
