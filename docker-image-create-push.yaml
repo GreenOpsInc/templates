@@ -13,24 +13,27 @@ spec:
           - name: repo-url
           - name: dockerfile-path
             value: Dockerfile
-          - name: git-cred-username
-          - name: git-cred-token
+          - name: git-cred-secret
           - name: image-name
           - name: image-tag
           - name: registry-org-name
-          - name: registry-cred-username
-          - name: registry-cred-email
-          - name: registry-cred-password
+          - name: registry-dockercred-secret
       script:
         image: bitnami/kubectl:latest
         command: [bash]
+        env:
+          - name: GIT_CRED_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: "{{inputs.parameters.git-cred-secret}}"
+                key: username
+          - name: GIT_CRED_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: "{{inputs.parameters.git-cred-secret}}"
+                key: token
         source: |
           #!/bin/bash
-          
-          # create dockercred
-          dockercredname="dockercred-{{inputs.parameters.registry-org-name}}-{{inputs.parameters.registry-cred-username}}"
-          
-          kubectl create secret docker-registry $dockercredname -n argo --docker-server=https://index.docker.io/v1/ --docker-username={{inputs.parameters.registry-cred-username}} --docker-password={{inputs.parameters.registry-cred-password}} --docker-email={{inputs.parameters.registry-cred-email}}
           
           # create kaniko pod name
           timestamp=$(date +%s)
@@ -48,7 +51,7 @@ spec:
               - name: kaniko
                 image: gcr.io/kaniko-project/executor:latest
                 args:
-                  - "--context=git://{{inputs.parameters.git-cred-username}}:{{inputs.parameters.git-cred-token}}@{{inputs.parameters.repo-url}}"
+                  - "--context=git://$GIT_CRED_USERNAME:$GIT_CRED_TOKEN@{{inputs.parameters.repo-url}}"
                   - "--dockerfile={{inputs.parameters.dockerfile-path}}"
                   - "--destination={{inputs.parameters.registry-org-name}}/{{inputs.parameters.image-name}}:{{inputs.parameters.image-tag}}"
                 volumeMounts:
@@ -58,7 +61,7 @@ spec:
             volumes:
               - name: kaniko-secret
                 secret:
-                  secretName: $dockercredname
+                  secretName: {{inputs.parameters.registry-dockercred-secret}}
                   items:
                     - key: .dockerconfigjson
                       path: config.json
