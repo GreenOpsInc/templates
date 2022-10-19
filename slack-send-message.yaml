@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: slack-send-message
+  namespace: argo
+spec:
+  workflowMetadata:
+  entrypoint: slack-send-message
+  templates:
+    - name: http
+      inputs:
+        parameters:
+          - name: message
+          - name: webhook-url
+          - name: webhook-token
+      http:
+        method: "POST"
+        headers:
+          - name: "x-content-type"
+            value: "application/json"
+        url: "{{inputs.parameters.webhook-url}}/{{inputs.parameters.webhook-token}}"
+        body: '{"text":"{{inputs.parameters.message}}"}'
