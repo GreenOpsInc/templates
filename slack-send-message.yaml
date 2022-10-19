@@ -7,16 +7,13 @@ spec:
   workflowMetadata:
   entrypoint: slack-send-message
   templates:
-    - name: http
+    - name: slack-send-message
       inputs:
         parameters:
-          - name: message
           - name: webhook-url
           - name: webhook-token
+          - name: message
       http:
         method: "POST"
-        headers:
-          - name: "x-content-type"
-            value: "application/json"
         url: "{{inputs.parameters.webhook-url}}/{{inputs.parameters.webhook-token}}"
         body: '{"text":"{{inputs.parameters.message}}"}'
