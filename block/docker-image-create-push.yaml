@@ -1,0 +1,95 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: docker-image-create-push
+  namespace: argo
+spec:
+  workflowMetadata:
+  entrypoint: docker-image-create-push
+  templates:
+    - name: docker-image-create-push
+      inputs:
+        parameters:
+          - name: repo-url
+          - name: dockerfile-path
+            value: Dockerfile
+          - name: git-cred-secret
+          - name: image-name
+          - name: image-tag
+          - name: registry-org-name
+          - name: registry-dockercred-secret
+      script:
+        image: bitnami/kubectl:latest
+        command: [bash]
+        env:
+          - name: GIT_CRED_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: "{{inputs.parameters.git-cred-secret}}"
+                key: username
+          - name: GIT_CRED_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: "{{inputs.parameters.git-cred-secret}}"
+                key: token
+        source: |
+          #!/bin/bash
+          
+          # create kaniko pod name
+          timestamp=$(date +%s)
+          podname="kaniko-executor-$timestamp"
+          
+          # execute kaniko pod to build and push image
+          kubectl apply -f - <<EOF
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            name: $podname
+            namespace: argo
+          spec:
+            containers:
+              - name: kaniko
+                image: gcr.io/kaniko-project/executor:latest
+                args:
+                  - "--context=git://$GIT_CRED_USERNAME:$GIT_CRED_TOKEN@{{inputs.parameters.repo-url}}"
+                  - "--dockerfile={{inputs.parameters.dockerfile-path}}"
+                  - "--destination={{inputs.parameters.registry-org-name}}/{{inputs.parameters.image-name}}:{{inputs.parameters.image-tag}}"
+                volumeMounts:
+                  - name: kaniko-secret
+                    mountPath: /kaniko/.docker
+            restartPolicy: Never
+            volumes:
+              - name: kaniko-secret
+                secret:
+                  secretName: {{inputs.parameters.registry-dockercred-secret}}
+                  items:
+                    - key: .dockerconfigjson
+                      path: config.json
+          EOF
+          
+          kubectl wait --namespace=argo --for=condition=ready --timeout=30s pod/$podname
+          
+          echo "pod $podname is running..."
+          
+          # check pod status and print logs
+          podstatus="Running"
+          while [ $podstatus = "Running" ]
+          do
+          sleep 5
+          kubectl logs --namespace=argo $podname --since=5s
+          podstatus=$(kubectl get pods -n argo $podname -o jsonpath="{.status.phase}")
+          done
+          
+          # delete pod and dockercred secret
+          kubectl delete pod $podname -n argo
+          
+          kubectl delete secret $dockercredname -n argo
+          
+          # check pod status and print message
+          if (( $podstatus != "Succeeded" )); then
+          echo "Job failed, exiting..."
+          exit 1
+          else
+          echo "Image successfully built and pushed to dockerhub"
+          exit 0
+          fi
