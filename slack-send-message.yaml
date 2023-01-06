@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: slack-send-message
+  namespace: argo
+spec:
+  workflowMetadata:
+  entrypoint: slack-send-message
+  templates:
+    - name: slack-send-message
+      inputs:
+        parameters:
+          - name: webhook-url
+          - name: webhook-token-secret
+          - name: message
+      script:
+        image: ellerbrock/alpine-bash-curl-ssl:latest
+        command: [ bash ]
+        env:
+          - name: WEBHOOK_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: "{{inputs.parameters.webhook-token-secret}}"
+                key: token
+        source: |
+          #!/bin/bash
+          
+          echo "token = $WEBHOOK_TOKEN"
+          curl -X POST --data '{"text":"{{inputs.parameters.message}}"}' {{inputs.parameters.webhook-url}}/$WEBHOOK_TOKEN
