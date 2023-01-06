@@ -58,5 +58,4 @@ spec:
           argocd app wait {{inputs.parameters.application-name}} --health {{inputs.parameters.flags}}
           ARGOCD_REV=$(argocd app history {{inputs.parameters.application-name}} | grep -o "(.*)" | tail -1 | sed 's/[()]//g')
           ARGOCD_APP={{inputs.parameters.application-name}}
-          ARGOCD_ADDR={{inputs.parameters.argocd-server-address}}
-          echo "{\"$ARGOCD_APP\": \"$ARGOCD_REV\", \"argocd-address\": \"$ARGOCD_ADDR\"}" > greenops-output.txt
+          echo "{\"$ARGOCD_APP\": \"$ARGOCD_REV\", \"argocd-address\": \"$ARGOCD_SERVER\"}" > greenops-output.txt
