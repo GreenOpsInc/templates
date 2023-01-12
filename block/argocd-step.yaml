@@ -16,7 +16,7 @@ spec:
       inputs:
         parameters:
         - name: argocd-version
-          value: v1.6.0
+          value: v2.0.5
         - name: application-name
         - name: revision
         - name: flags
@@ -48,7 +48,7 @@ spec:
           if [[ -z $ARGOCD_AUTH_TOKEN ]] && [[ -z "$ARGOCD_USERNAME" || -z "$ARGOCD_PASSWORD" ]]; then
             echo "Either the ARGOCD_AUTH_TOKEN must be specified, or the ARGOCD_USERNAME/ARGOCD_PASSWORD must be specified."
             exit 1
-          fi 
+          fi
           if [ -z $ARGOCD_AUTH_TOKEN ]; then
             yes | argocd login "$ARGOCD_SERVER" --username=$ARGOCD_USERNAME --password=$ARGOCD_PASSWORD {{inputs.parameters.flags}} || echo ${PIPESTATUS[@]}
           fi
@@ -58,4 +58,4 @@ spec:
           argocd app wait {{inputs.parameters.application-name}} --health {{inputs.parameters.flags}}
           ARGOCD_REV=$(argocd app history {{inputs.parameters.application-name}} | grep -o "(.*)" | tail -1 | sed 's/[()]//g')
           ARGOCD_APP={{inputs.parameters.application-name}}
-          echo "{\"$ARGOCD_APP\": \"$ARGOCD_REV\"}" > greenops-output.txt
+          echo "{\"name\": \"$ARGOCD_APP\", \"revision\": \"$ARGOCD_REV\", \"argocd-address\": \"$ARGOCD_SERVER\"}" > greenops-output.txt
