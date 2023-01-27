@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: redis-delete-key
+spec:
+  templates:
+    - name: redis-delete-key
+      container:
+        image: goodsmileduck/redis-cli
+        command: [redis-cli]
+        args:
+          - '-h'
+          - '{{inputs.parameters.host}}'
+          - '-p'
+          - '{{inputs.parameters.port}}'
+          - 'DEL'
+          - '{{inputs.parameters.key}}'
+      inputs:
+        parameters:
+          - name: key
+            value: key
+          - name: host
+            value: redisserver.greenops.svc.cluster.local
+          - name: port
+            value: 6379

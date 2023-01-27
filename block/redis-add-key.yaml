@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: redis-add-key
+spec:
+  templates:
+    - name: redis-add-key
+      container:
+        image: goodsmileduck/redis-cli
+        command: [redis-cli]
+        args:
+          - '-h'
+          - '{{inputs.parameters.host}}'
+          - '-p'
+          - '{{inputs.parameters.port}}'
+          - 'SET'
+          - '{{inputs.parameters.key}}'
+          - '{{inputs.parameters.value}}'
+      inputs:
+        parameters:
+          - name: key
+            value: key
+          - name: value
+            value: value
+          - name: host
+            value: redisserver.greenops.svc.cluster.local
+          - name: port
+            value: 6379
