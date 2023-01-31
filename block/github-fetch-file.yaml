@@ -1,0 +1,47 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: github-fetch-file
+  namespace: argo
+spec:
+  entrypoint: github-fetch-file
+  templates:
+    - name: github-fetch-file
+      inputs:
+        parameters:
+          - name: github-repo
+          - name: path-to-file
+          - name: github-credentials-secret
+            value: github-pat
+      outputs:
+        parameters:
+          - name: file-contents
+            valueFrom:
+              path: /tmp/gh_file.tf
+      script:
+        image: docker.io/greenopsinc/pygithub
+        env:
+          - name: TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: "{{inputs.parameters.github-credentials-secret}}"
+                key: token
+                optional: false
+        command: [python]
+        source: |
+          from github import Github
+          import os
+          import time
+          import string
+          import random
+          import base64
+          import re
+          token = os.getenv('TOKEN')
+          g = Github(token)
+          path_to_file = "{{inputs.parameters.path-to-file}}"
+          local_path = "/tmp/gh_file.tf"
+          repo = g.get_repo("{{inputs.parameters.github-repo}}")
+          contents = repo.get_contents(path_to_file)
+          decoded = base64.b64decode(contents.content)
+          with open(local_path, "w") as text_file:
+            text_file.write(decoded.decode("utf-8"))

@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: terraform-plan-apply
+spec:
+  templates:
+    - name: terraform-plan-apply
+      inputs:
+        parameters:
+          - name: config
+      script:
+        image: hashicorp/terraform
+        command: [ /bin/sh ]
+        source: |
+          echo '{{inputs.parameters.config}}' > main.tf
+          terraform init
+          terraform plan -out=/tmp/plan_result.tf
+          terraform apply /tmp/plan_result.tf
