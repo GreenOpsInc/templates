@@ -53,6 +53,8 @@ spec:
           print(image_names)
           print(image_tags)
           for idx in range(len(image_names)):
+            print(image_names[idx])
+            print(image_tags[idx])
             re.sub(image_names[idx]+":.*", image_names[idx]+":"+image_tags[idx], raw_contents)
           repo.update_file(contents.path, "updating release", raw_contents, contents.sha, branch=new_branch)
           #Creating pull request
