@@ -52,9 +52,9 @@ spec:
           IMAGE_TAGS_LIST=$(echo $IMAGE_TAGS_LIST | jq '. |= . + ["'$IMAGE_TAG'"]')
         done
 
-        echo "Image names list:"
+        echo "Image names list: ${IMAGE_NAMES_LIST}"
         echo $IMAGE_NAMES_LIST | jq . > image_names_list.json
-        echo "Image tags list:"
+        echo "Image tags list: ${IMAGE_TAGS_LIST}"
         echo $IMAGE_TAGS_LIST | jq . > image_tags_list.json
       env:
         - name: TOKEN
