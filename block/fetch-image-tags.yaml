@@ -9,6 +9,8 @@ spec:
       parameters: 
       - name: username
       - name: organization
+      - name: token-secret-name
+        value: dockerhub-auth-secret
     outputs:
       parameters:
       - name: image-names-list
@@ -58,5 +60,5 @@ spec:
         - name: TOKEN
           valueFrom:
             secretKeyRef:
-              name: "dockerhub-auth-secret"
+              name: "{{inputs.parameters.token-secret-name}}"
               key: token
