@@ -50,11 +50,7 @@ spec:
           raw_contents = contents.decoded_content.decode()
           image_names = {{inputs.parameters.image-names}}
           image_tags = {{inputs.parameters.updated-revisions}}
-          print(image_names)
-          print(image_tags)
           for idx in range(len(image_names)):
-            print(image_names[idx])
-            print(image_tags[idx])
             to_replace_regex = image_names[idx]+":.*"
             replaced_image = image_names[idx]+":"+image_tags[idx]
             raw_contents = re.sub(to_replace_regex, replaced_image, raw_contents)
