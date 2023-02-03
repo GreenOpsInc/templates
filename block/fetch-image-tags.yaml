@@ -9,6 +9,14 @@ spec:
       parameters: 
       - name: username
       - name: organization
+    outputs:
+      parameters:
+      - name: image-names-list
+        valueFrom:
+          path: image_names_list.json
+      - name: image-tags-list
+        valueFrom:
+          path: image_tags_list.json
     script:
       image: curlimages/curl:7.69.1
       command: [/bin/sh]
