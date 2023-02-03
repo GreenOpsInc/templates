@@ -15,8 +15,8 @@ spec:
         - name: path-to-file
         - name: github-branch
           value: main
-        - name: image-name
-        - name: updated-revision
+        - name: image-names
+        - name: updated-revisions
         - name: github-credentials-secret
           value: github-pat
       script:
@@ -48,7 +48,10 @@ spec:
           #Updating new branch
           contents = repo.get_contents("{{inputs.parameters.path-to-file}}", ref=new_branch)
           raw_contents = contents.decoded_content.decode()
-          re.sub("image: {{inputs.parameters.image-name}}:.*", "image: {{inputs.parameters.image-name}}:{{inputs.parameters.updated-revision}}", raw_contents)
+          image_names = {{inputs.parameters.image-names}}
+          image_tags = {{inputs.parameters.updated-revisions}}
+          for idx in range(len(image_names)):
+            re.sub(image_names[idx]+":.*", image_names[idx]+":"+image_tags[idx], raw_contents)
           repo.update_file(contents.path, "updating release", raw_contents, contents.sha, branch=new_branch)
           #Creating pull request
           pr = repo.create_pull(title="Updating release", body="updates", head=new_branch, base=source)
