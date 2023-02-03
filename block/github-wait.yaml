@@ -50,6 +50,8 @@ spec:
           raw_contents = contents.decoded_content.decode()
           image_names = {{inputs.parameters.image-names}}
           image_tags = {{inputs.parameters.updated-revisions}}
+          print(image_names)
+          print(image_tags)
           for idx in range(len(image_names)):
             re.sub(image_names[idx]+":.*", image_names[idx]+":"+image_tags[idx], raw_contents)
           repo.update_file(contents.path, "updating release", raw_contents, contents.sha, branch=new_branch)
