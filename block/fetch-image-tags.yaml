@@ -20,7 +20,7 @@ spec:
         valueFrom:
           path: image_tags_list.json
     script:
-      image: curlimages/curl:7.69.1
+      image: badouralix/curl-jq:alpine
       command: [/bin/sh]
       source: |
         #!/bin/bash
