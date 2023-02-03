@@ -57,7 +57,7 @@ spec:
             print(image_tags[idx])
             to_replace_regex = image_names[idx]+":.*"
             replaced_image = image_names[idx]+":"+image_tags[idx]
-            re.sub(to_replace_regex, replaced_image, raw_contents)
+            raw_contents = re.sub(to_replace_regex, replaced_image, raw_contents)
           repo.update_file(contents.path, "updating release", raw_contents, contents.sha, branch=new_branch)
           #Creating pull request
           pr = repo.create_pull(title="Updating release", body="updates", head=new_branch, base=source)
