@@ -24,9 +24,9 @@ spec:
       command: [/bin/sh]
       source: |
         #!/bin/bash
-        UNAME="{{inputs.parameters.config}}"
+        UNAME="{{inputs.parameters.username}}"
         UPASS="$TOKEN"
-        ORG="{{inputs.parameters.config}}"
+        ORG="{{inputs.parameters.organization}}"
 
         TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${UNAME}'", "password": "'${UPASS}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
         if [ "$TOKEN" == "null" ]
