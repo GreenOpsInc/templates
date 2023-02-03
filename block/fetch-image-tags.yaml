@@ -1,0 +1,54 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: fetch-image-tags
+spec:
+  templates:
+  - name: dockerhub
+    inputs: 
+      parameters: 
+      - name: username
+      - name: organization
+    script:
+      image: curlimages/curl:7.69.1
+      command: [/bin/sh]
+      source: |
+        #!/bin/bash
+        UNAME="{{inputs.parameters.config}}"
+        UPASS="$TOKEN"
+        ORG="{{inputs.parameters.config}}"
+
+        TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${UNAME}'", "password": "'${UPASS}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
+        if [ "$TOKEN" == "null" ]
+        then
+          echo "Login not successful. Please check the username/password."
+          exit 1
+        fi
+        
+        REPO_LIST=$(curl -s -H "Authorization: JWT ${TOKEN}" https://hub.docker.com/v2/repositories/${ORG}/?page_size=100 | jq -r '.results|.[]|.name')
+        if [ -z "$REPO_LIST" ]
+        then
+          echo "Repo list is empty. Please check the ORG name."
+          exit 1
+        fi
+        
+        IMAGE_NAMES_LIST='[]'
+        IMAGE_TAGS_LIST='[]'
+        for i in ${REPO_LIST}
+        do
+          # This command fetches the latest image tag for a specific image
+          IMAGE_TAG=$(curl -s -H "Authorization: JWT ${TOKEN}" https://hub.docker.com/v2/repositories/${ORG}/${i}/tags/?page_size=1 | jq -r '.results|.[]|.name')
+          IMAGE_NAMES_LIST=$(echo $IMAGE_NAMES_LIST | jq '. |= . + ["'${ORG}'/'${i}'"]')
+          IMAGE_TAGS_LIST=$(echo $IMAGE_TAGS_LIST | jq '. |= . + ["'$IMAGE_TAG'"]')
+        done
+
+        echo "Image names list:"
+        echo $IMAGE_NAMES_LIST | jq . > image_names_list.json
+        echo "Image tags list:"
+        echo $IMAGE_TAGS_LIST | jq . > image_tags_list.json
+      env:
+        - name: TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: "dockerhub-auth-secret"
+              key: token
