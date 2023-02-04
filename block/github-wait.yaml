@@ -6,6 +6,54 @@ metadata:
 spec:
   entrypoint: pr
   templates:
+    - name: create-branch-with-new-release
+      inputs:
+        parameters:
+        - name: branch-name
+        - name: github-repo
+        - name: path-to-file
+        - name: github-branch
+          value: main
+        - name: image-names
+        - name: updated-revisions
+        - name: github-credentials-secret
+          value: github-pat
+      script:
+        image: docker.io/greenopsinc/pygithub
+        env:
+          - name: TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: "{{inputs.parameters.github-credentials-secret}}"
+                key: token
+                optional: false
+        command: [python]
+        source: |
+          from github import Github
+          import os
+          import time
+          import string
+          import random
+          import re
+          source = "{{inputs.parameters.github-branch}}"
+          letters = string.ascii_lowercase
+          new_branch = "{{inputs.parameters.pr-prefix-name}}" + ''.join(random.choice(letters) for i in range(10))
+          token = os.getenv('TOKEN')
+          g = Github(token)
+          repo = g.get_repo("{{inputs.parameters.github-repo}}")
+          sb = repo.get_branch(source)
+          #Creating new branch
+          repo.create_git_ref(ref='refs/heads/' + new_branch, sha=sb.commit.sha)
+          #Updating new branch
+          contents = repo.get_contents("{{inputs.parameters.path-to-file}}", ref=new_branch)
+          raw_contents = contents.decoded_content.decode()
+          image_names = {{inputs.parameters.image-names}}
+          image_tags = {{inputs.parameters.updated-revisions}}
+          for idx in range(len(image_names)):
+            to_replace_regex = image_names[idx]+":.*"
+            replaced_image = image_names[idx]+":"+image_tags[idx]
+            raw_contents = re.sub(to_replace_regex, replaced_image, raw_contents)
+          repo.update_file(contents.path, "updating release", raw_contents, contents.sha, branch=new_branch)
     - name: pr
       inputs:
         parameters:
