@@ -86,6 +86,7 @@ spec:
           #Waiting for merge
           while not pr.is_merged() and str(pr.state) != "closed":
               time.sleep(10)
+              pr = repo.get_pull(pr.number)
     - name: pr
       inputs:
         parameters:
@@ -140,3 +141,4 @@ spec:
           #Waiting for merge
           while not pr.is_merged() and str(pr.state) != "closed":
               time.sleep(10)
+              pr = repo.get_pull(pr.number)
