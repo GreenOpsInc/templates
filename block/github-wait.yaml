@@ -37,7 +37,7 @@ spec:
           import re
           source = "{{inputs.parameters.github-branch}}"
           letters = string.ascii_lowercase
-          new_branch = "{{inputs.parameters.pr-prefix-name}}" + ''.join(random.choice(letters) for i in range(10))
+          new_branch = "{{inputs.parameters.branch-name}}"
           token = os.getenv('TOKEN')
           g = Github(token)
           repo = g.get_repo("{{inputs.parameters.github-repo}}")
