@@ -84,7 +84,7 @@ spec:
           repo = g.get_repo("{{inputs.parameters.github-repo}}")
           pr = repo.create_pull(title="Updating release", body="updates", head=new_branch, base=source)
           #Waiting for merge
-          while not pr.is_merged():
+          while not pr.is_merged() and str(pr.state) != "closed":
               time.sleep(10)
     - name: pr
       inputs:
@@ -138,5 +138,5 @@ spec:
           #Creating pull request
           pr = repo.create_pull(title="Updating release", body="updates", head=new_branch, base=source)
           #Waiting for merge
-          while not pr.is_merged():
+          while not pr.is_merged() and str(pr.state) != "closed":
               time.sleep(10)
