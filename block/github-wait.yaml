@@ -54,6 +54,38 @@ spec:
             replaced_image = image_names[idx]+":"+image_tags[idx]
             raw_contents = re.sub(to_replace_regex, replaced_image, raw_contents)
           repo.update_file(contents.path, "updating release", raw_contents, contents.sha, branch=new_branch)
+    - name: pr-with-existing-branch
+      inputs:
+        parameters:
+        - name: branch-name
+        - name: github-repo
+        - name: github-branch
+          value: main
+        - name: github-credentials-secret
+          value: github-pat
+      script:
+        image: docker.io/greenopsinc/pygithub
+        env:
+          - name: TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: "{{inputs.parameters.github-credentials-secret}}"
+                key: token
+                optional: false
+        command: [python]
+        source: |
+          from github import Github
+          import os
+          import time
+          source = "{{inputs.parameters.github-branch}}"
+          new_branch = "{{inputs.parameters.branch-name}}"
+          token = os.getenv('TOKEN')
+          g = Github(token)
+          repo = g.get_repo("{{inputs.parameters.github-repo}}")
+          pr = repo.create_pull(title="Updating release", body="updates", head=new_branch, base=source)
+          #Waiting for merge
+          while not pr.is_merged():
+              time.sleep(10)
     - name: pr
       inputs:
         parameters:
