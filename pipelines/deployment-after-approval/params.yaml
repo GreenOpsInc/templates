@@ -1,0 +1,14 @@
+arguments:
+  parameters:
+    - name: deploy-application-argocd-version
+      value: v2.0.5
+    - name: deploy-application-application-name
+      value: <ARGOCD_APPLICATION>
+    - name: deploy-application-revision
+      value: master
+    - name: deploy-application-flags
+      value: --
+    - name: deploy-application-argocd-server-address
+      value: <GREENOPS_DOMAIN>
+    - name: deploy-application-argocd-credentials-secret
+      value: argocd-user
