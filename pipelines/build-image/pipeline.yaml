@@ -1,0 +1,35 @@
+metadata:
+  generateName: docker-image-create-push-
+  namespace: argo
+spec:
+  entrypoint: starter
+  volumes:
+    - name: kaniko-secret
+      secret:
+        secretName: "{{workflow.parameters.registry-dockercred-secret}}"
+        items:
+          - key: .dockerconfigjson
+            path: config.json
+  templates:
+    - name: starter
+      steps:
+        - - name: docker-image-create-push
+            templateRef:
+              name: docker-image-create-push
+              template: docker-image-create-push
+            arguments:
+              parameters:
+                - name: repo-url
+                  value: "{{workflow.parameters.repo-url}}"
+                - name: dockerfile-path
+                  value: "{{workflow.parameters.dockerfile-path}}"
+                - name: git-cred-secret
+                  value: "{{workflow.parameters.git-cred-secret}}"
+                - name: image-name
+                  value: "{{workflow.parameters.image-name}}"
+                - name: image-tag
+                  value: "{{workflow.parameters.image-tag}}"
+                - name: registry-org-name
+                  value: "{{workflow.parameters.registry-org-name}}"
+                - name: registry-dockercred-secret
+                  value: "{{workflow.parameters.registry-dockercred-secret}}"
