@@ -1,0 +1,16 @@
+arguments:
+  parameters:
+    - name: repo-url
+      value: github.com/scriptcamp/kubernetes-kaniko
+    - name: dockerfile-path
+      value: Dockerfile
+    - name: git-cred-secret
+      value: docker-image-git-cred
+    - name: image-name
+      value: kaniko-demo-image
+    - name: image-tag
+      value: "1.0"
+    - name: registry-org-name
+      value: <YOUR_DOCKER_REGISTRY>
+    - name: registry-dockercred-secret
+      value: dockercred
