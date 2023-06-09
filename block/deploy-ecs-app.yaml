@@ -1,0 +1,46 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: ecs-deploy
+spec:
+  templates:
+  - name: ecs-deploy
+    inputs: 
+      parameters: 
+      - name: repo-url
+      - name: service-name
+      - name: task-definition-path
+      - name: codedeploy-appspec-path
+    script:
+      image: amazon/aws-cli
+      command: [/bin/bash]
+      env:
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: "aws-credentials"
+              key: aws-access-key
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: "aws-credentials"
+              key: aws-secret-key
+        - name: AWS_DEFAULT_REGION
+          valueFrom:
+            secretKeyRef:
+              name: "aws-credentials"
+              key: aws-region
+        - name: GIT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: "git-credentials"
+              key: username
+        - name: GIT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: "git-credentials"
+              key: password
+      source: |
+        yum install -y git
+        git clone https://$GIT_USERNAME:$GIT_PASSWORD@{{inputs.parameters.repo-url}}
+        aws ecs deploy --service {{inputs.parameters.service-name}} --task-definition {{inputs.parameters.task-definition-path}} --codedeploy-appspec {{inputs.parameters.codedeploy-appspec-path}}
