@@ -21,6 +21,7 @@ spec:
         - name: revision
         - name: flags
           value: --
+        - name: cluster-name
         - name: argocd-server-address
         - name: argocd-credentials-secret
           value: argocd-user
