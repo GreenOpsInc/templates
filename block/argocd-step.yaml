@@ -22,6 +22,7 @@ spec:
         - name: flags
           value: --
         - name: cluster-name
+        - name: deployment-variable-overrides
         - name: argocd-server-address
         - name: argocd-credentials-secret
           value: argocd-user
@@ -55,6 +56,9 @@ spec:
           fi
           echo "Running as ArgoCD User:"
           argocd account get-user-info {{inputs.parameters.flags}}
+          if [ -z {{inputs.parameters.deployment-variable-overrides}} ]; then
+            argocd app set {{inputs.parameters.application-name}} {{inputs.parameters.deployment-variable-overrides}}
+          fi
           argocd app sync {{inputs.parameters.application-name}} --revision {{inputs.parameters.revision}} {{inputs.parameters.flags}}
           argocd app wait {{inputs.parameters.application-name}} --health {{inputs.parameters.flags}}
           ARGOCD_REV=$(argocd app history {{inputs.parameters.application-name}} | grep -o "(.*)" | tail -1 | sed 's/[()]//g')
